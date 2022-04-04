@@ -1,0 +1,31 @@
+.board-container{
+    align-items: center;
+}
+
+.board{
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+}
+
+.board > button {
+    width: 33.333%;
+    height: 33.333%;
+}
+
+.board > .square {
+    border-radius: 0 0 0 0;
+}
+
+.board > .square:first-child{
+    border-radius: 10px 0 0 0;
+}
+.board > .square:nth-child(3){
+    border-radius: 0 10px 0 0;
+}
+.board > .square:nth-child(7){
+    border-radius: 0 0 0 10px;
+}
+.board > .square:nth-child(9){
+    border-radius: 0 0 10px 0;
+}
