@@ -29,3 +29,9 @@
 .board > .square:nth-child(9){
     border-radius: 0 0 10px 0;
 }
+
+.board[disabled] > .square{
+    background-color: gray !important;
+    color: white;
+    pointer-events: none;
+}

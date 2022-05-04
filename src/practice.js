@@ -29,10 +29,7 @@ class Board extends React.Component {
             squares: squares,
             xTurn: !this.state.xTurn
         })
-        let result = this.caculateWinner(squares);
-        if(result){
-            alert(result + " wins!")
-        }
+        
     }
 
     caculateWinner(squares){
@@ -58,23 +55,15 @@ class Board extends React.Component {
 
 
     render() {
-        
+        const winner = this.caculateWinner(this.state.squares);
+        const status = winner ? `${winner} wins!` : "Player: " + (this.state.xTurn ? 'X' : 'O');
         
         return (
             <div>
-                <div className="status">{"Player: " + (this.state.xTurn ? 'X' : 'O')}</div>
+                <div className="status">{status}</div>
                 <div className="board-container">
-                    <div className="board">
-                        {/* {[...Array(9)].map((x, i) => this.renderSquare(this.state.squares[i]))} */}
-                        {this.renderSquare(0)}
-                        {this.renderSquare(1)}
-                        {this.renderSquare(2)}
-                        {this.renderSquare(3)}
-                        {this.renderSquare(4)}
-                        {this.renderSquare(5)}
-                        {this.renderSquare(6)}
-                        {this.renderSquare(7)}
-                        {this.renderSquare(8)}
+                    <div className="board" disabled={winner ? true : false} >
+                        {[...Array(9)].map((x, i) => this.renderSquare(i))}
                     </div>
                 </div>
             </div>
