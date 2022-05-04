@@ -1,0 +1,28 @@
+.chat {
+    max-height: 100vh !important;
+}
+.chat-input {
+    height: 100%;
+    resize: none;
+}
+
+.chat-item {
+    /* display: inline-block; */
+    clear: both;
+    float: left;
+    max-width: 60%;
+    min-width: 40%;
+    border-radius: 20px;
+}
+
+.chat-container {
+    height: calc(100vh - 5em - 10px);
+}
+
+.chat-input-container > div > *{
+    padding-top: 10px;
+    height: 5em;
+}
+.chat-input-container > div > button{
+    height: 100%;
+}

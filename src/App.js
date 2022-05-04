@@ -7,6 +7,7 @@ import React from 'react';
 import Login from './login.jsx';
 import AlertController from './alertController.jsx'
 import Lobby from './lobby';
+import Meet from './meet';
 
 
 class App extends React.Component {
@@ -31,6 +32,7 @@ class App extends React.Component {
 
     setPeer = (peer) => {
         this.peer = peer;
+        this.setState({session: true});
     }
 
     checkLogin = () => {
@@ -38,9 +40,13 @@ class App extends React.Component {
             return (
                 <Login setAccount={this.setAccount} />
             )
-        } else if (this.state.session === null) {
+        } else if (this.peer === null) {
             return (
                 <Lobby setPeer={this.setPeer} account={this.state.account}/>
+            )
+        } else {
+            return (
+                <Meet peer={this.peer}/>
             )
         }
         console.error("WHAT")
