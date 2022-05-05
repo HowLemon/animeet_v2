@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faSignal } from "@fortawesome/free-solid-svg-icons";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './frameControl.css'
-import * as bootstrap from 'bootstrap';
+// import * as bootstrap from 'bootstrap';
 
 class FrameControl extends React.Component {
     render() {

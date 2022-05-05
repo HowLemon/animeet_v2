@@ -1,6 +1,6 @@
 import React from "react";
-import PeerCore from "./peerCore";
-import * as bootstrap from 'bootstrap';
+// import PeerCore from "./peerCore";
+// import * as bootstrap from 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Chat from "./meetComponents/chat";

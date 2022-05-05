@@ -6,8 +6,8 @@ import React from 'react';
 
 import Login from './login.jsx';
 import AlertController from './alertController.jsx'
-import Lobby from './lobby';
-import Meet from './meet';
+import Lobby from './lobby.jsx';
+import Meet from './meet.jsx';
 
 
 class App extends React.Component {
