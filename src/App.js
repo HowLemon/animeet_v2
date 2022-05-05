@@ -10,6 +10,7 @@ import Lobby from './lobby';
 import Meet from './meet';
 
 
+
 class App extends React.Component {
     constructor(props) {
         super(props);
@@ -46,10 +47,9 @@ class App extends React.Component {
             )
         } else {
             return (
-                <Meet peer={this.peer}/>
+                <Meet /** @type {PeerCore} */peer={this.peer} account={this.state.account}/>
             )
         }
-        console.error("WHAT")
     }
 
     render() {

@@ -55,7 +55,7 @@ class PeerCore {
     get ready() { return this._ready };
     get name() { return this._name }
     get id() { return this.peer.id; }
-    get isHost() { return (this._hostSession === '') }
+    get isHost() { return (this._hostSession === '' || !this._hostSession) }
     get connectedIDs() {
         return this._connList.map(x => x.peer);
     }

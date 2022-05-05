@@ -24,6 +24,7 @@ class Lobby extends React.Component {
     }
 
     createPeerAsHost = () => {
+        console.log("Setting up host session")
         this.props.setPeer(new PeerCore(this.props.account.name))
     }
 

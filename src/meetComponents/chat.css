@@ -1,28 +1,100 @@
 .chat {
     max-height: 100vh !important;
 }
+
+.chat-container{
+    overflow-y: auto;
+}
+
 .chat-input {
     height: 100%;
     resize: none;
 }
 
-.chat-item {
-    /* display: inline-block; */
+.chat-item-container {
     clear: both;
+}
+
+.chat-item {
     float: left;
     max-width: 60%;
-    min-width: 40%;
-    border-radius: 20px;
+    min-width: 3em;
+    border-radius: 15px;
+    position: relative;
+}
+
+.chat-attribute {
+    display: inline-block;
+    position: absolute;
+}
+
+
+.chat-attribute label {
+    color: black;
+    clear: both;
+    font-size: 0.7rem;
+    width: 10em;
+    text-align: left;
+    color: #0000007b;
+}
+
+.chat-item[type="self"] {
+    float: right;
+    background-color: #5fffc7;
+    border-color: #00ffd9 !important;
+}
+
+.chat-item[type="self"] .chat-attribute {
+    right: unset;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    padding-right: 10px;
+}
+
+.chat-item[type="self"] label {
+    float: right;
+    text-align: right;
+}
+
+.chat-item[type="other"] {
+    color: white;
+    background-color: #3c3f3f;
+    border-color: #2e524c !important;
+}
+
+.chat-item[type="other"] .chat-attribute {
+    right: 0;
+    top: 0;
+    padding-left: 10px;
+    transform: translateX(100%);
+}
+
+.chat-item[type="other"] label {
+    float: left;
+}
+
+.chat-item[type="system"] {
+    max-width: none;
+    width: 100%;
+    font-size: 0.9rem;
+    font-style: italic;
+    border: none !important;
+}
+
+.chat-item[type="system"] .chat-attribute {
+    display: none;
 }
 
 .chat-container {
     height: calc(100vh - 5em - 10px);
 }
 
-.chat-input-container > div > *{
+.chat-input-container>div>* {
     padding-top: 10px;
     height: 5em;
 }
-.chat-input-container > div > button{
+
+.chat-input-container>div>button {
     height: 100%;
 }

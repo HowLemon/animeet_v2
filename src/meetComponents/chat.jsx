@@ -4,32 +4,43 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './chat.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane } from "@fortawesome/free-solid-svg-icons";
+import { timeConverter } from "../utils";
 
 class Chat extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            inputMessage: ''
         }
+        this.handleInput = this.handleInput.bind(this);
+        this.submit = this.submit.bind(this);
     }
+
+    handleInput(e){
+        // console.log("WHAT",e.target.value);
+        this.setState({inputMessage:e.target.value});
+    }
+    
+    submit(){
+        if(this.state.inputMessage === '' || !this.state.inputMessage)return;
+        this.props.sendMessage(this.state.inputMessage);
+        this.setState({inputMessage:''});
+    }
+    
+
     render() {
         return (
             <div className="container-fluid vh-100 position-relative">
                 <div className="row chat-container">
                     <div className="container">
-                        <ChatItem message="waatatat"/>
-                        <ChatItem message="waatatat"/>
-                        <ChatItem message="waatatat"/>
-                        <ChatItem message="waatatat"/>
-                        <ChatItem message="waatatat"/>
-                        <ChatItem message="waatatat"/>
-                        <ChatItem message="waatatat wadwdawdwa dwa wad awd awd awd awdaw dawd awd awd wad awd aw"/>
+                        {this.props.messages.map((obj,i)=>(<ChatItem key={`${i}-${obj.timestamp}`} message={obj.message} owner={obj.owner} time={obj.timestamp} type={obj.role} />))}
                     </div>
 
                 </div>
                 <div className="row mt-3 chat-input-container">
                     <div className="form-floating input-group col-12">
-                        <textarea className="form-control chat-input p-1" placeholder="Leave a comment here" id="floatingTextarea"></textarea>
-                        <button type="button" className="btn btn-primary"><FontAwesomeIcon icon={faPaperPlane} /></button>
+                        <textarea value={this.state.inputMessage} onKeyDown={(e)=>{if(e.key==="Enter" && !e.shiftKey){e.preventDefault();this.submit();}}} onChange={this.handleInput} className="form-control chat-input p-1" placeholder="Leave a comment here" id="floatingTextarea"></textarea>
+                        <button onClick={this.submit} type="button" className="btn btn-primary"><FontAwesomeIcon icon={faPaperPlane} /></button>
                     </div>
                 </div>
             </div>
@@ -40,10 +51,22 @@ class Chat extends React.Component {
 class ChatItem extends React.Component {
     constructor(props) {
         super(props);
+        this.message = this.props.message || "NO MESSAGE?????";
+        this.owner = this.props.owner || "NO OWNER???";
+        this.time = this.props.time || "NO TIME???";
+        this.type = this.props.type || "other";
     }
     render() {
         return (
-            <div className="border mt-3 p-2 mw-75 min-w-25 chat-item">{this.props.message}</div>
+            <div className="chat-item-container pt-3 ">
+                <div type={this.type} className="border p-2 ps-3 pe-3 mw-75 min-w-25 chat-item">
+                    {this.props.message}
+                    <div className="chat-attribute">
+                    <label>{this.owner}</label>
+                    <label>{timeConverter(this.time)}</label>
+                </div>  
+                </div>
+            </div>
         )
     }
 }
