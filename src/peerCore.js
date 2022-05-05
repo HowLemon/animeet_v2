@@ -20,7 +20,7 @@ class PeerCore {
         this.peer = null;
         this.started = false;
         this.connectors = 0;
-        
+
         this._connectorConnList = [];
 
         this._connList = [];
@@ -32,10 +32,14 @@ class PeerCore {
         this._activeCaptureCalloutList = [];
         this._activeWebGLCalloutList = [];
 
+        this._activeCustomCalloutList = [];
+
         this._incomingAudioList = [];
         this._incomingCameraList = [];
         this._incomingCaptureList = [];
         this._incomingWebGLList = [];
+
+        this._incomingCustomList = [];
 
         //event subscription list to notify UI
         this._messageEvList = [];
@@ -196,6 +200,10 @@ class PeerCore {
                 break;
             case STREAM_TYPE.WEBGL:
                 break;
+            case STREAM_TYPE.CUSTOM:
+                this._localMessageEvent(`${incomingStream.metadata.owner} is sharing their ${incomingStream.metadata.custom}`, "system", Date.now());
+                this._incomingCustomList.push(incomingStream);
+                break;
             default:
                 console.log("unknown stream type????");
                 return;
@@ -271,7 +279,7 @@ class PeerCore {
             }
             this._connList.push(conn);
             this.connectors++;
-            this._connEvList.forEach(e=>e());
+            this._connEvList.forEach(e => e());
         })
 
         conn.on("close", () => {
@@ -284,7 +292,7 @@ class PeerCore {
                 this._localMessageEvent(`${conn.metadata.name} has left this session`, "system", Date.now());
             }
             this._removeConnFromList(conn);
-            this._connEvList.forEach(e=>e());
+            this._connEvList.forEach(e => e());
         });
 
         // processes incoming data, distinguished by custom-made types
@@ -350,6 +358,9 @@ class PeerCore {
                         case (STREAM_TYPE.WEBGL): this._localMessageEvent(`${data.content.metadata.owner} stoped their avatar`, "system", Date.now())
                             this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
                             break;
+                        case (STREAM_TYPE.CUSTOM): this._localMessageEvent(`${data.content.metadata.owner} stoped their ${this._incomingWebGLList.findIndex(findbyMetadata).metadata.custom}`, "system", Date.now())
+                            this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
+                            break;
                         default:
                             break;
                     }
@@ -363,7 +374,7 @@ class PeerCore {
             }
         })
         // this._connList.push(conn);
-        
+
     }
 
     /**
@@ -489,14 +500,17 @@ class PeerCore {
 
 
     //TODO webGL capture
-
+    //------------ Custom --------------
+    startCustomCall(stream){
+        
+    }
     //preparing streaming data
 
 
 }
 
 //enums
-var DATA_TYPE = {
+const DATA_TYPE = {
     MESSAGE: 0,
     REQUEST_CONNECT: 1,
     FACE: 2,
@@ -506,11 +520,12 @@ var DATA_TYPE = {
     CLOSE_STREAM: 7
 }
 
-var STREAM_TYPE = {
+const STREAM_TYPE = {
     AUDIO: 0,
     CAMERA: 1,
     CAPTURE: 2,
-    WEBGL: 3
+    WEBGL: 3,
+    CUSTOM: 4
 }
 
 export default PeerCore;

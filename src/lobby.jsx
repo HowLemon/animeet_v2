@@ -1,6 +1,6 @@
 import React from "react";
 
-import * as bootstrap from 'bootstrap';
+// import * as bootstrap from 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './lobby.css';
 import PeerCore from "./peerCore";
