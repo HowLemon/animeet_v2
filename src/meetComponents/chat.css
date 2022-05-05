@@ -21,6 +21,7 @@
     min-width: 3em;
     border-radius: 15px;
     position: relative;
+    text-align: left;
 }
 
 .chat-attribute {
@@ -42,6 +43,7 @@
     float: right;
     background-color: #5fffc7;
     border-color: #00ffd9 !important;
+    text-align: right;
 }
 
 .chat-item[type="self"] .chat-attribute {
@@ -80,6 +82,7 @@
     font-size: 0.9rem;
     font-style: italic;
     border: none !important;
+    text-align: center;
 }
 
 .chat-item[type="system"] .chat-attribute {
@@ -98,3 +101,24 @@
 .chat-input-container>div>button {
     height: 100%;
 }
+
+/* width */
+::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: none; 
+  }
+   
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: rgba(136, 136, 136, 0.535); 
+    border-radius: 20px;
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+  }

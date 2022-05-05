@@ -13,6 +13,13 @@ class Lobby extends React.Component {
         }
     }
 
+    componentDidMount(){
+        const urlParams = new URL(window.location.href);
+        if(urlParams.searchParams.has("sid")){
+            this.props.setPeer(new PeerCore(this.props.account.name, urlParams.searchParams.get("sid")));
+        }
+    }
+
     handleHostInput = (e) => {
         this.setState({
             hostSession: e.target.value

@@ -14,6 +14,7 @@ class Chat extends React.Component {
         }
         this.handleInput = this.handleInput.bind(this);
         this.submit = this.submit.bind(this);
+        this.chatContainerRef = React.createRef();
     }
 
     handleInput(e){
@@ -26,12 +27,16 @@ class Chat extends React.Component {
         this.props.sendMessage(this.state.inputMessage);
         this.setState({inputMessage:''});
     }
+
+    componentDidUpdate(prevProps) {
+        if(prevProps.messages !== this.props.messages) this.chatContainerRef.current.scrollTop = this.chatContainerRef.current.scrollHeight;
+    }
     
 
     render() {
         return (
             <div className="container-fluid vh-100 position-relative">
-                <div className="row chat-container">
+                <div className="row chat-container" ref={this.chatContainerRef}>
                     <div className="container">
                         {this.props.messages.map((obj,i)=>(<ChatItem key={`${i}-${obj.timestamp}`} message={obj.message} owner={obj.owner} time={obj.timestamp} type={obj.role} />))}
                     </div>

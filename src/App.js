@@ -1,6 +1,6 @@
 // import logo from './logo.svg';
 import './App.css';
-import * as bootstrap from 'bootstrap';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React from 'react';
 
@@ -8,7 +8,6 @@ import Login from './login.jsx';
 import AlertController from './alertController.jsx'
 import Lobby from './lobby';
 import Meet from './meet';
-
 
 
 class App extends React.Component {
@@ -23,6 +22,11 @@ class App extends React.Component {
         this.checkLogin = this.checkLogin.bind(this);
         this.setAccount = this.setAccount.bind(this);
         this.setPeer = this.setPeer.bind(this);
+    }
+
+    componentDidMount(){
+        const urlParams = new URL(window.location.href);
+        console.log(urlParams.searchParams.get("sid"))
     }
 
     setAccount = (data) => {

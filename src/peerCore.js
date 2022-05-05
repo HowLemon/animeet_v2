@@ -20,6 +20,8 @@ class PeerCore {
         this.peer = null;
         this.started = false;
         this.connectors = 0;
+        
+        this._connectorConnList = [];
 
         this._connList = [];
 
@@ -38,6 +40,8 @@ class PeerCore {
         //event subscription list to notify UI
         this._messageEvList = [];
         this._streamEvList = [];
+        this._openEvList = [];
+        this._connEvList = [];
 
         /** @type {MediaStream} */
         this.audioStream = null
@@ -55,9 +59,14 @@ class PeerCore {
     get ready() { return this._ready };
     get name() { return this._name }
     get id() { return this.peer.id; }
+
     get isHost() { return (this._hostSession === '' || !this._hostSession) }
+    get currentSession() { return this.isHost ? this.peer.id : this._hostSession }
     get connectedIDs() {
         return this._connList.map(x => x.peer);
+    }
+    get connectedMetadatas() {
+        return this._connList.map(x => x.metadata);
     }
 
 
@@ -66,8 +75,7 @@ class PeerCore {
 
         // TODO setup a proper TURN server of my own
         this.peer = new Peer({
-            secure:true,
-            debug: 3,
+            secure: true,
             host: "howlemon-peerjs.herokuapp.com",
             port: 443,
             config: {
@@ -113,6 +121,7 @@ class PeerCore {
             this._localMessageEvent(`session ID: ${id}`, "system", Date.now())
             this._localMessageEvent(`is host: ${this.isHost}`, "system", Date.now())
             console.log("PeerCore open", id);
+            this._openEvList.forEach(e => e(id));
             //if is not host, connect to a specified session
             if (!this.isHost) {
                 this._localMessageEvent(`Attempting to connect to Host`, "system", Date.now())
@@ -123,6 +132,7 @@ class PeerCore {
         this.peer.on('connection', (conn) => {
             this._localMessageEvent(`${conn.metadata.name} has connected to this session`, "system", Date.now());
             this._handleDataConnection(conn);
+
             console.log("PeerCore conn", conn);
         });
 
@@ -139,6 +149,12 @@ class PeerCore {
     //event subscriber
     on(event, fn) {
         switch (event) {
+            case "open":
+                this._openEvList.push(fn);
+                break;
+            case "connection":
+                this._connEvList.push(fn);
+                break;
             case "message":
                 this._messageEvList.push(fn);
                 break;
@@ -155,19 +171,19 @@ class PeerCore {
     handleStreamInput(incomingStream) {
 
         console.log("incoming call stream data")
-        
+
 
         incomingStream.assignStreamCallBack = (fn) => {
             incomingStream.on("stream", fn);
         }
 
-        incomingStream.on("stream",(st) => {
+        incomingStream.on("stream", (st) => {
             incomingStream.activeStream = st;
         });
 
         switch (incomingStream.metadata.type) {
             case STREAM_TYPE.AUDIO:
-                
+
                 this._incomingAudioList.push(incomingStream);
                 break;
             case STREAM_TYPE.CAMERA:
@@ -253,8 +269,9 @@ class PeerCore {
                 console.log("sending conn info", this._connList);
                 conn.send(util.generatePayload(this.connectedIDs, DATA_TYPE.REQUEST_CONNECT));
             }
-
+            this._connList.push(conn);
             this.connectors++;
+            this._connEvList.forEach(e=>e());
         })
 
         conn.on("close", () => {
@@ -267,6 +284,7 @@ class PeerCore {
                 this._localMessageEvent(`${conn.metadata.name} has left this session`, "system", Date.now());
             }
             this._removeConnFromList(conn);
+            this._connEvList.forEach(e=>e());
         });
 
         // processes incoming data, distinguished by custom-made types
@@ -314,9 +332,9 @@ class PeerCore {
                 case (DATA_TYPE.CLOSE_STREAM):
                     this._localStreamEvent();
                     console.log(data);
-                    console.log("capture list",this._incomingCaptureList);
-                    console.log("camera list",this._incomingCameraList);
-                    console.log("audio list",this._incomingAudioList);
+                    console.log("capture list", this._incomingCaptureList);
+                    console.log("camera list", this._incomingCameraList);
+                    console.log("audio list", this._incomingAudioList);
                     switch (data.content.metadata.type) {
                         case (STREAM_TYPE.AUDIO):
                             this._incomingAudioList.splice(this._incomingAudioList.findIndex(findbyMetadata), 1);
@@ -329,7 +347,7 @@ class PeerCore {
                             this._localMessageEvent(`${data.content.metadata.owner} stopped sharing their capture`, "system", Date.now())
                             this._incomingCaptureList.splice(this._incomingCaptureList.findIndex(findbyMetadata), 1);
                             break;
-                        case (STREAM_TYPE.WEBGL):this._localMessageEvent(`${data.content.metadata.owner} stoped their avatar`, "system", Date.now())
+                        case (STREAM_TYPE.WEBGL): this._localMessageEvent(`${data.content.metadata.owner} stoped their avatar`, "system", Date.now())
                             this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
                             break;
                         default:
@@ -344,8 +362,8 @@ class PeerCore {
                     break;
             }
         })
-        this._connList.push(conn);
-
+        // this._connList.push(conn);
+        
     }
 
     /**
