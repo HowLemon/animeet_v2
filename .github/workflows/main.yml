@@ -10,7 +10,21 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Gen dummy page
+        name: npm intall
+        run: |
+          npm install -y
+      -
+        name: npm build
+        if: success()
+        run: |
+          npm run build
+      -
+        name: npm eject
+        if: success()
+        run: |
+          npm run eject
+      -
+        name: ls
+        if: success()
         run: |
           ls
-      
