@@ -23,7 +23,7 @@ jobs:
         name: npm eject
         if: success()
         run: |
-          npm run eject
+          npm run eject -y
       -
         name: ls
         if: success()
