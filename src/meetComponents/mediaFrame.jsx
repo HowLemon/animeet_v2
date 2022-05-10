@@ -167,7 +167,7 @@ class DummyMedia extends React.Component {
             const wheelGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.4, 10);
             const wheelMat = new THREE.MeshPhongMaterial({ color: 0x0f0f0f });
 
-            loader.load("./assets/three/CAR2.obj",
+            loader.load("./assets/three/car2.obj",
                 (obj) => {
                     console.log(obj);
                     obj.children[0].material = carMat;
