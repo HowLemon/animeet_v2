@@ -7,7 +7,7 @@ export function timeConverter(UNIX_timestamp) {
     var hour = a.getHours();
     var min = a.getMinutes();
     var sec = a.getSeconds();
-    var time = year + '-' + month + '-' + date + ' ' + zerofill(hour) + ':' + zerofill(min) + ':' + zerofill(sec);
+    var time = year + ' ' + month + ' ' + date + ' ' + zerofill(hour) + ':' + zerofill(min) + ':' + zerofill(sec);
     return time;
 }
 

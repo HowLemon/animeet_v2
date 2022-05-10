@@ -40,6 +40,7 @@ class PeerCore {
         this._incomingWebGLList = [];
 
         this._incomingCustomList = [];
+        this._activeCustomStreamList = [];
 
         //event subscription list to notify UI
         this._messageEvList = [];
@@ -71,6 +72,10 @@ class PeerCore {
     }
     get connectedMetadatas() {
         return this._connList.map(x => x.metadata);
+    }
+
+    get activeCustomStreamList(){
+        return this._incomingCustomList;
     }
 
 
@@ -373,6 +378,11 @@ class PeerCore {
                     break;
             }
         })
+
+        this._activeCustomStreamList.forEach(stream=>{
+            let calling = this.peer.call(conn.peer, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
+            this._activeCustomCalloutList.push(calling);
+        })
         // this._connList.push(conn);
 
     }
@@ -502,10 +512,23 @@ class PeerCore {
     //TODO webGL capture
     //------------ Custom --------------
     startCustomCall(stream){
+        this.connectedIDs.forEach((ID)=>{
+            let calling = this.peer.call(ID, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
+            this._activeCustomCalloutList.push(calling);
+        })
+        this._activeCustomStreamList.push(stream);
+        
+    }
+    stopCustomCall(stream){
+        this._sendCloseStreamSignal(STREAM_TYPE.CUSTOM);
+        this._activeCustomCalloutList = [];
+        let index = this._activeCustomStreamList.indexOf(stream);
+        if(index !== -1){
+            this._activeCustomStreamList.splice(index, 1);
+        }
         
     }
     //preparing streaming data
-
 
 }
 
@@ -517,7 +540,8 @@ const DATA_TYPE = {
     DEBUG: 4,
     PING: 5,
     CURSOR: 6,
-    CLOSE_STREAM: 7
+    CLOSE_STREAM: 7,
+    REQUEST_STREAMS: 8
 }
 
 const STREAM_TYPE = {

@@ -23,8 +23,8 @@ class Chat extends React.Component {
     }
     
     submit(){
-        if(this.state.inputMessage === '' || !this.state.inputMessage)return;
-        this.props.sendMessage(this.state.inputMessage);
+        if(this.state.inputMessage.trim() === '' || !this.state.inputMessage)return;
+        this.props.sendMessage(this.state.inputMessage.trim());
         this.setState({inputMessage:''});
     }
 
@@ -44,8 +44,8 @@ class Chat extends React.Component {
                 </div>
                 <div className="row mt-3 chat-input-container">
                     <div className="form-floating input-group col-12">
-                        <textarea value={this.state.inputMessage} onKeyDown={(e)=>{if(e.key==="Enter" && !e.shiftKey){e.preventDefault();this.submit();}}} onChange={this.handleInput} className="form-control chat-input p-1" placeholder="Leave a comment here" id="floatingTextarea"></textarea>
-                        <button onClick={this.submit} type="button" className="btn btn-primary"><FontAwesomeIcon icon={faPaperPlane} /></button>
+                        <textarea value={this.state.inputMessage} onKeyDown={(e)=>{if(e.key==="Enter" && !e.shiftKey){e.preventDefault();this.submit();}}} onChange={this.handleInput} className="form-control chat-input p-1 shadow-none" placeholder="Leave a comment here" id="floatingTextarea"></textarea>
+                        <button onClick={this.submit} type="button" className="btn btn-primary shadow-none"><FontAwesomeIcon icon={faPaperPlane} /></button>
                     </div>
                 </div>
             </div>

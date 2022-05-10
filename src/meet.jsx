@@ -7,6 +7,9 @@ import Chat from "./meetComponents/chat";
 import MediaFrame from './meetComponents/mediaFrame';
 import FrameControl from "./meetComponents/frameControl";
 
+const peerContext = React.createContext(null);
+const accountContext = React.createContext(null);
+
 class Meet extends React.Component {
     constructor(props) {
         super(props);
@@ -54,7 +57,7 @@ class Meet extends React.Component {
             <div className="container-fluid vh-100">
                 <div className="row">
                     <div className="col-9 p-0 border-end vh-100">
-                        <MediaFrame/>
+                        <MediaFrame account={this.props.account} peer={this.peer}/>
                     </div>
                     <div className="col-3 p-0"><Chat messages={this.state.messages} sendMessage={this.sendMessage} /></div>
                     <FrameControl account={this.props.account} session={this.state.currentSession} friends={this.state.connectedMetadatas}/>

@@ -9,6 +9,7 @@ import AlertController from './alertController.jsx'
 import Lobby from './lobby.jsx';
 import Meet from './meet.jsx';
 
+const AccountContext = React.createContext(null);
 
 class App extends React.Component {
     constructor(props) {
@@ -24,7 +25,7 @@ class App extends React.Component {
         this.setPeer = this.setPeer.bind(this);
     }
 
-    componentDidMount(){
+    componentDidMount() {
         const urlParams = new URL(window.location.href);
         console.log(urlParams.searchParams.get("sid"))
     }
@@ -37,7 +38,7 @@ class App extends React.Component {
 
     setPeer = (peer) => {
         this.peer = peer;
-        this.setState({session: true});
+        this.setState({ session: true });
     }
 
     checkLogin = () => {
@@ -47,11 +48,11 @@ class App extends React.Component {
             )
         } else if (this.peer === null) {
             return (
-                <Lobby setPeer={this.setPeer} account={this.state.account}/>
+                <Lobby setPeer={this.setPeer} account={this.state.account} />
             )
         } else {
             return (
-                <Meet /** @type {PeerCore} */peer={this.peer} account={this.state.account}/>
+                <Meet /** @type {PeerCore} */ peer={this.peer} account={this.state.account} />
             )
         }
     }
@@ -59,8 +60,10 @@ class App extends React.Component {
     render() {
         return (
             <div className="App">
-                {this.checkLogin()}
-                <AlertController />
+                <AccountContext.Provider value={this.state.account}>
+                    {this.checkLogin()}
+                    <AlertController />
+                </AccountContext.Provider>
             </div>
         );
     }

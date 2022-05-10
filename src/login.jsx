@@ -24,7 +24,7 @@ class Login extends React.Component {
     }
 
     checkUserName(e) {
-        if (!this.state.inputValue || this.state.inputValue === "") {
+        if (!this.state.inputValue || this.state.inputValue.trim() === "") {
             alert("please enter a name");
             return;
         }

@@ -2,7 +2,7 @@
     max-height: 100vh !important;
 }
 
-.chat-container{
+.chat-container {
     overflow-y: auto;
 }
 
@@ -22,6 +22,7 @@
     border-radius: 15px;
     position: relative;
     text-align: left;
+    word-break: break-word;
 }
 
 .chat-attribute {
@@ -105,20 +106,20 @@
 /* width */
 ::-webkit-scrollbar {
     width: 5px;
-  }
-  
-  /* Track */
-  ::-webkit-scrollbar-track {
-    background: none; 
-  }
-   
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: rgba(136, 136, 136, 0.535); 
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: none;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: rgba(136, 136, 136, 0.535);
     border-radius: 20px;
-  }
-  
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover {
-    background: #555; 
-  }
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
