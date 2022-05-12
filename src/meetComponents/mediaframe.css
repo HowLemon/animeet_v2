@@ -1,3 +1,7 @@
 .media-container{
     background-color: rgba(24, 32, 32, 0.209);
 }
+
+.media-items{
+    width: 100%;
+}

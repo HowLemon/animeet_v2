@@ -7,8 +7,6 @@ import Chat from "./meetComponents/chat";
 import MediaFrame from './meetComponents/mediaFrame';
 import FrameControl from "./meetComponents/frameControl";
 
-const peerContext = React.createContext(null);
-const accountContext = React.createContext(null);
 
 class Meet extends React.Component {
     constructor(props) {
@@ -41,6 +39,11 @@ class Meet extends React.Component {
         this.peer.on("connection", ()=>{
             this.setState({connectedMetadatas: this.peer.connectedMetadatas})
         })
+
+        window.onbeforeunload = ()=>{
+            this.peer.destroy();
+        }
+
     }
 
     sendMessage(message) {

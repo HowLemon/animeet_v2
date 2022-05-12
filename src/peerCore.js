@@ -74,7 +74,7 @@ class PeerCore {
         return this._connList.map(x => x.metadata);
     }
 
-    get activeCustomStreamList(){
+    get activeCustomStreamList() {
         return this._incomingCustomList;
     }
 
@@ -363,7 +363,9 @@ class PeerCore {
                         case (STREAM_TYPE.WEBGL): this._localMessageEvent(`${data.content.metadata.owner} stoped their avatar`, "system", Date.now())
                             this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
                             break;
-                        case (STREAM_TYPE.CUSTOM): this._localMessageEvent(`${data.content.metadata.owner} stoped their ${this._incomingWebGLList.findIndex(findbyMetadata).metadata.custom}`, "system", Date.now())
+                        case (STREAM_TYPE.CUSTOM):
+
+                            this._localMessageEvent(`${data.content.metadata.owner} stopped their ${this._incomingCustomList.findIndex(findbyMetadata).metadata.custom}`, "system", Date.now())
                             this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
                             break;
                         default:
@@ -379,7 +381,7 @@ class PeerCore {
             }
         })
 
-        this._activeCustomStreamList.forEach(stream=>{
+        this._activeCustomStreamList.forEach(stream => {
             let calling = this.peer.call(conn.peer, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
             this._activeCustomCalloutList.push(calling);
         })
@@ -511,22 +513,24 @@ class PeerCore {
 
     //TODO webGL capture
     //------------ Custom --------------
-    startCustomCall(stream){
-        this.connectedIDs.forEach((ID)=>{
+    startCustomCall(stream) {
+        console.log("core stream",stream);
+        this.connectedIDs.forEach((ID) => {
             let calling = this.peer.call(ID, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
             this._activeCustomCalloutList.push(calling);
         })
         this._activeCustomStreamList.push(stream);
-        
     }
-    stopCustomCall(stream){
+    stopCustomCall(stream) {
         this._sendCloseStreamSignal(STREAM_TYPE.CUSTOM);
+        this.sendTextMessage("lol bye")
         this._activeCustomCalloutList = [];
         let index = this._activeCustomStreamList.indexOf(stream);
-        if(index !== -1){
+        if (index !== -1) {
+            this.sendDataToPeers("",DATA_TYPE.CLOSE_STREAM);
             this._activeCustomStreamList.splice(index, 1);
         }
-        
+
     }
     //preparing streaming data
 

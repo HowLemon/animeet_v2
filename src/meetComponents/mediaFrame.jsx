@@ -9,7 +9,8 @@ class MediaFrame extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            streams: []
+            incomingStreams: [],
+            calloutStreams: []
         }
         this.registerStream = this.registerStream.bind(this);
         // this.getStreams = this.getStreams.bind(this);
@@ -21,7 +22,13 @@ class MediaFrame extends React.Component {
     componentDidMount() {
         this.peer.on("call", () => {
             console.log("getting call", this.peer.activeCustomStreamList);
-            this.setState({ streams: this.peer.activeCustomStreamList });
+            this.setState({ incomingStreams: this.peer.activeCustomStreamList });
+        })
+    }
+
+    componentWillUnmount(){
+        this.state.calloutStreams.forEach(e=>{
+            this.peer.stopCustomCall(e);
         })
     }
 
@@ -30,15 +37,19 @@ class MediaFrame extends React.Component {
         stream.metadata = {};
         stream.metadata.custom = type;
         this.peer.startCustomCall(stream);
+        let snapshot = this.state.calloutStreams.slice();
+        snapshot.push(stream);
+        this.setState({calloutStreams: snapshot});
     }
+
 
 
     render() {
         return (
             <div className="media-container vh-100 container-fluid pt-10 p-5 position-relative">
-                <div className="col-6 position-absolute top-50 start-50 translate-middle">
+                <div className="col-6 position-absolute top-50 start-50 translate-middle media-items">
                     <DummyMedia registerStream={this.registerStream} width={300} height={300} />
-                    {this.state.streams.map((e, i) => <StreamMedia mediaConnection={e} stream-type={e.metadata.type} key={i} />)}
+                    {this.state.incomingStreams.map((e, i) => <StreamMedia mediaConnection={e} stream-type={e.metadata.type} key={i} />)}
                 </div>
             </div>
         )
@@ -71,7 +82,7 @@ class StreamMedia extends React.Component {
 
     render() {
         return (
-            <div className="d-inline-block border border-primary position-relative"><video ref={this.videoRef} /></div>
+            <div className="d-inline-block border border-primary position-relative"><video className="d-block" ref={this.videoRef} /></div>
         )
     }
 }
@@ -164,8 +175,8 @@ class DummyMedia extends React.Component {
             /** @type {THREE.Group} */
             let car = null;
 
-            const wheelGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.4, 10);
-            const wheelMat = new THREE.MeshPhongMaterial({ color: 0x0f0f0f });
+            // const wheelGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.4, 10);
+            // const wheelMat = new THREE.MeshPhongMaterial({ color: 0x0f0f0f });
 
             loader.load("./assets/three/car2.obj",
                 (obj) => {
