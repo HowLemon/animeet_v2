@@ -20,11 +20,12 @@ class FrameControl extends React.Component {
                     <div className="offcanvas-body settings-body">
                         <p id="name">Name: {this.props.account.name}</p>
                         <p id="session">Current Session: {this.props.session}</p>
-                        <div id="connectors">Connected Users:
+                        <div id="connectors">Connected Users: ({this.props.friends.length + 1})
                             <ul className="list-group list-group-flush mt-3 ps-3 pe-3">
-                                {this.props.friends.map((x,index)=>(
-                                    <li key={index} className="list-group-item"><FontAwesomeIcon icon={faSignal} />  {x.name}</li>
+                                {this.props.friends.map((x, index) => (
+                                    <li key={index} className="list-group-item"><FontAwesomeIcon icon={faSignal} />  {x.name}{x.peer === this.props.session ? " (host)" : ""}</li>
                                 ))}
+                                <li className="list-group-item"><FontAwesomeIcon icon={faSignal} />  You</li>
                             </ul>
                         </div>
                         <p>

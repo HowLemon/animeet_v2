@@ -13,7 +13,7 @@ class Meet extends React.Component {
         super(props);
         this.state = {
             currentSession: "unknown",
-            connectedMetadatas: [],
+            connectedNames: [],
             messages: []
         }
         this.sendMessage = this.sendMessage.bind(this);
@@ -34,10 +34,10 @@ class Meet extends React.Component {
         this.peer.on("open",()=>{
             window.history.pushState({}, null,`?sid=${this.peer.currentSession}`)
             this.setState({currentSession:this.peer.currentSession})
-            this.setState({connectedMetadatas: this.peer.connectedMetadatas})
+            this.setState({connectedNames: this.peer.connectedNames})
         })
         this.peer.on("connection", ()=>{
-            this.setState({connectedMetadatas: this.peer.connectedMetadatas})
+            this.setState({connectedNames: this.peer.connectedNames})
         })
 
         window.onbeforeunload = ()=>{
@@ -63,7 +63,7 @@ class Meet extends React.Component {
                         <MediaFrame account={this.props.account} peer={this.peer}/>
                     </div>
                     <div className="col-3 p-0"><Chat messages={this.state.messages} sendMessage={this.sendMessage} /></div>
-                    <FrameControl account={this.props.account} session={this.state.currentSession} friends={this.state.connectedMetadatas}/>
+                    <FrameControl account={this.props.account} session={this.state.currentSession} friends={this.state.connectedNames}/>
                 </div>
             </div>
         )
