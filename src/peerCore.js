@@ -21,9 +21,8 @@ class PeerCore {
         this.started = false;
         this.connectors = 0;
 
-        this._connectorConnList = [];
-
         this._connList = [];
+        this._connectedNameList = []
 
         this._connectorMissedPings = {}
 
@@ -65,13 +64,17 @@ class PeerCore {
     get name() { return this._name }
     get id() { return this.peer.id; }
 
-    get isHost() { return (this._hostSession === '' || !this._hostSession) }
+    get isHost() { return (this._hostSession === '' || !this._hostSession || this._hostSession === this.peer.id) }
     get currentSession() { return this.isHost ? this.peer.id : this._hostSession }
     get connectedIDs() {
         return this._connList.map(x => x.peer);
     }
     get connectedMetadatas() {
         return this._connList.map(x => x.metadata);
+    }
+
+    get connectedNames() {
+        return this._connectedNameList;
     }
 
     get activeCustomStreamList() {
@@ -127,7 +130,7 @@ class PeerCore {
         // peer built-in events
 
         this.peer.on('open', (id) => {
-            this._localMessageEvent(`session ID: ${id}`, "system", Date.now())
+            this._localMessageEvent(`Peer ID: ${id}`, "system", Date.now())
             this._localMessageEvent(`is host: ${this.isHost}`, "system", Date.now())
             console.log("PeerCore open", id);
             this._openEvList.forEach(e => e(id));
@@ -258,9 +261,14 @@ class PeerCore {
 
     // --------------------- connection handlers --------------------------
 
+    /**
+     * (internal)
+     * connect to the peers
+     * @param {string} sessionID the session ID
+     */
     _requestConnect(sessionID) {
         /** @type {Peer.DataConnection} */
-        var conn = this.peer.connect(sessionID, { metadata: { name: this.name } });
+        var conn = this.peer.connect(sessionID, { metadata: { name: this.name, host: this._hostSession } });
         //data connection handlers
         this._handleDataConnection(conn);
     }
@@ -268,15 +276,18 @@ class PeerCore {
 
 
 
-    // handles individual connector's data input
+    /**
+     * handles individual connector's dataconnection
+     * @param {Peer.DataConnection} conn 
+     */
     _handleDataConnection(conn) {
 
-        conn.on("open", () => {
+        const onPeerOpen = () => {
             if (conn.peer === this._hostSession) {
                 //this.generateChatMessage("connected to host", "system", Date.now()); 
                 this._localMessageEvent("connected to host", "system", Date.now())
             }
-            conn.send(util.generatePayload("hi", DATA_TYPE.DEBUG));
+            conn.send(util.generatePayload({ name: this.name, host: this.isHost, peer: this.peer.id }, DATA_TYPE.HELLO));
 
             if (this.isHost) { //if this instance is host, send connection list to the connector
                 console.log("sending conn info", this._connList);
@@ -285,9 +296,10 @@ class PeerCore {
             this._connList.push(conn);
             this.connectors++;
             this._connEvList.forEach(e => e());
-        })
+        }
+        conn.on("open", onPeerOpen);
 
-        conn.on("close", () => {
+        const onPeerClose = () => {
             if (conn.peer === this._hostSession) {
                 //this.generateChatMessage("host session ended", "system", Date.now());
                 this._localMessageEvent("host session ended", "system", Date.now());
@@ -297,12 +309,14 @@ class PeerCore {
                 this._localMessageEvent(`${conn.metadata.name} has left this session`, "system", Date.now());
             }
             this._removeConnFromList(conn);
+            
             this._connEvList.forEach(e => e());
-        });
+        }
+        conn.on("close", onPeerClose);
 
         // processes incoming data, distinguished by custom-made types
         // could be more modular
-        conn.on("data", (data) => {
+        const onPeerReceiveData = (data) => {
             console.log("data", data);
             const findbyMetadata = (Element) => {
                 Element.UUID = data.content.metadata.UUID;
@@ -373,13 +387,17 @@ class PeerCore {
                     }
                     break;
 
-
+                case (DATA_TYPE.HELLO):
+                    //Received personal data from peers
+                    this._connectedNameList.push(data.content);
+                    break;
 
                 default:
                     console.log("NO TYPE", data);
                     break;
             }
-        })
+        }
+        conn.on("data", onPeerReceiveData);
 
         this._activeCustomStreamList.forEach(stream => {
             let calling = this.peer.call(conn.peer, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
@@ -523,7 +541,7 @@ class PeerCore {
     }
     stopCustomCall(stream) {
         this._sendCloseStreamSignal(STREAM_TYPE.CUSTOM);
-        this.sendTextMessage("lol bye")
+        // this.sendTextMessage("lol bye")
         this._activeCustomCalloutList = [];
         let index = this._activeCustomStreamList.indexOf(stream);
         if (index !== -1) {
@@ -545,7 +563,8 @@ const DATA_TYPE = {
     PING: 5,
     CURSOR: 6,
     CLOSE_STREAM: 7,
-    REQUEST_STREAMS: 8
+    REQUEST_STREAMS: 8,
+    HELLO: 9
 }
 
 const STREAM_TYPE = {
