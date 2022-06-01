@@ -91,7 +91,7 @@
 }
 
 .chat-container {
-    height: calc(100vh - 5em - 10px);
+    height: calc(100vh - 5em - 30px);
 }
 
 .chat-input-container>div>* {

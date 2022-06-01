@@ -59,10 +59,10 @@ class Meet extends React.Component {
         return (
             <div className="container-fluid vh-100">
                 <div className="row">
-                    <div className="col-9 p-0 border-end vh-100">
+                    <div className="col-12 p-0 border-end vh-100">
                         <MediaFrame account={this.props.account} peer={this.peer}/>
                     </div>
-                    <div className="col-3 p-0"><Chat messages={this.state.messages} sendMessage={this.sendMessage} /></div>
+                    <Chat messages={this.state.messages} sendMessage={this.sendMessage} />
                     <FrameControl account={this.props.account} session={this.state.currentSession} friends={this.state.connectedNames}/>
                 </div>
             </div>
