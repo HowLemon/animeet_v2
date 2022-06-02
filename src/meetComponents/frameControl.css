@@ -9,3 +9,29 @@
 .settings-body{
     text-align: left;
 }
+
+canvas.live2D{
+    width: 100%;
+    height: auto;
+}
+
+.canvas-container{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top:0;
+    left: 0;
+}
+
+.canvas-container .character{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0%;
+    left: 0%;
+}
+
+#avatar-container{
+    position: relative;
+    overflow: hidden;
+}
