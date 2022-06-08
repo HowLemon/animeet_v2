@@ -4,4 +4,35 @@
 
 .media-items{
     width: 100%;
+    height: 100%;
+}
+
+.media-items .avatars {
+    position: absolute;
+    bottom: 0;
+    align-items: flex-end;
+}
+.media-items  .avatar{
+    vertical-align: bottom;
+}
+
+
+
+.media-items  .avatar.host{
+    order: -1;
+    width: 30em;
+    height: 40em;
+}
+.media-items  .avatar{
+    width: 15em;
+    height: 20em;
+}
+.media-items  .avatar.host canvas{
+    height: 40em;
+}
+
+.media-items  .avatar canvas{
+    bottom: 0;
+    height: 20em;
+
 }

@@ -64,7 +64,7 @@ class PeerCore {
     get name() { return this._name }
     get id() { return this.peer.id; }
 
-    get isHost() { return (this._hostSession === '' || !this._hostSession || this._hostSession === this.peer.id) }
+    get isHost() { return this.peer?(this._hostSession === '' || !this._hostSession || this._hostSession === this.id):false }
     get currentSession() { return this.isHost ? this.peer.id : this._hostSession }
     get connectedIDs() {
         return this._connList.map(x => x.peer);
@@ -209,7 +209,7 @@ class PeerCore {
             case STREAM_TYPE.WEBGL:
                 break;
             case STREAM_TYPE.CUSTOM:
-                this._localMessageEvent(`${incomingStream.metadata.owner} is sharing their ${incomingStream.metadata.custom}`, "system", Date.now());
+                this._localMessageEvent(`${incomingStream.metadata.owner} is sharing their ${incomingStream.metadata.info}`, "system", Date.now());
                 this._incomingCustomList.push(incomingStream);
                 break;
             default:
@@ -296,6 +296,10 @@ class PeerCore {
             this._connList.push(conn);
             this.connectors++;
             this._connEvList.forEach(e => e());
+            this._activeCustomStreamList.forEach(stream => {
+                let calling = this.peer.call(conn.peer, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM, stream.info));
+                this._activeCustomCalloutList.push(calling);
+            })
         }
         conn.on("open", onPeerOpen);
 
@@ -378,13 +382,14 @@ class PeerCore {
                             this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
                             break;
                         case (STREAM_TYPE.CUSTOM):
-
-                            this._localMessageEvent(`${data.content.metadata.owner} stopped their ${this._incomingCustomList.findIndex(findbyMetadata).metadata.custom}`, "system", Date.now())
-                            this._incomingWebGLList.splice(this._incomingWebGLList.findIndex(findbyMetadata), 1);
+                            console.log("i forgot how to get data lol", data.content);
+                            this._localMessageEvent(`${data.content.metadata.owner} stopped their ${this._incomingCustomList.find(e=>e.activeStream.id === data.content.metadata.info).metadata.info}`, "system", Date.now())
+                            this._incomingCustomList.splice(this._incomingCustomList.findIndex(e=>e.activeStream.id === data.content.metadata.info), 1);
                             break;
                         default:
                             break;
                     }
+                    this._localStreamEvent();
                     break;
 
                 case (DATA_TYPE.HELLO):
@@ -399,10 +404,7 @@ class PeerCore {
         }
         conn.on("data", onPeerReceiveData);
 
-        this._activeCustomStreamList.forEach(stream => {
-            let calling = this.peer.call(conn.peer, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
-            this._activeCustomCalloutList.push(calling);
-        })
+        
         // this._connList.push(conn);
 
     }
@@ -432,8 +434,8 @@ class PeerCore {
     // ---------------------------------streams----------------------------------------
 
     // stream metadata generator
-    generateStreamMeta(stream_type) {
-        return { metadata: { type: stream_type, owner: this.name, UUID: this.id } };
+    generateStreamMeta(stream_type, info=null) {
+        return { metadata: { type: stream_type, owner: this.name, UUID: this.id, info:info } };
     }
 
     /**
@@ -531,21 +533,30 @@ class PeerCore {
 
     //TODO webGL capture
     //------------ Custom --------------
-    startCustomCall(stream) {
+    startCustomCall(stream, info) {
         console.log("core stream",stream);
+        stream.info = info;
         this.connectedIDs.forEach((ID) => {
-            let calling = this.peer.call(ID, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM));
+            let calling = this.peer.call(ID, stream, this.generateStreamMeta(STREAM_TYPE.CUSTOM, info));
             this._activeCustomCalloutList.push(calling);
         })
         this._activeCustomStreamList.push(stream);
     }
     stopCustomCall(stream) {
-        this._sendCloseStreamSignal(STREAM_TYPE.CUSTOM);
+        console.log("CALLOUT LIST???", this._activeCustomCalloutList);
+        // this._sendCloseStreamSignal(STREAM_TYPE.CUSTOM);
         // this.sendTextMessage("lol bye")
-        this._activeCustomCalloutList = [];
+        // this._activeCustomCalloutList = [];
         let index = this._activeCustomStreamList.indexOf(stream);
+        let callout = this._activeCustomCalloutList.find(e => 
+            e.localStream.id === stream.id
+        )
+        this._activeCustomCalloutList = this._activeCustomCalloutList.filter(e=>e!==callout);
+        console.log("the callout to stop: ", callout);
         if (index !== -1) {
-            this.sendDataToPeers("",DATA_TYPE.CLOSE_STREAM);
+            console.log("stopping custom stream", stream, this._activeCustomStreamList[index])
+            this.sendDataToPeers(this.generateStreamMeta(STREAM_TYPE.CUSTOM, stream.id),DATA_TYPE.CLOSE_STREAM);
+            callout.close()
             this._activeCustomStreamList.splice(index, 1);
         }
 

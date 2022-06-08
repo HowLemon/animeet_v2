@@ -8502,6 +8502,9 @@ var Controller = (function () {
                 500,
                 500
             ]);
+            var data = new Uint8Array(500 * 500 * 4);
+            glInstance.readPixels(0, 0, 500, 500, glInstance.RGBA, glInstance.UNSIGNED_BYTE, data);
+            window.framebuffer = data;
         }
     };
     Controller.prototype.stop = function () {
