@@ -394,6 +394,7 @@ render() {
  */
 async function init() {
     let calibrated = false;
+    let ready = true;
     const videoElement = document.getElementById("video-player");
     const faceMesh = await new FaceMesh({
         locateFile: (file) => {
@@ -415,7 +416,11 @@ async function init() {
 
     async function sendVideoElement(stream) {
         try {
-            await faceMesh.send({ image: videoElement });
+            if(ready) {
+                ready = false;
+                await faceMesh.send({ image: videoElement });
+                ready = true;
+            };
         } catch (err) {
             console.error("sendVideoElement", err);
         }
