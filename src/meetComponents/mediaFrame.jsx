@@ -46,6 +46,19 @@ class MediaFrame extends React.Component {
         })
     }
 
+    displayScreenShares(){
+        return this.props.localStreams.map((e, i) => {
+            switch (e.type) {
+                case "avatar":
+                    return (<AvatarMedia localStream={e.stream} stream-type={"avatar"} key={e.stream.id} isHost={e.isHost} />)
+                case "screen":
+                    return (<StreamMedia localStream={e.stream} stream-type={"screen"} key={e.stream.id} isHost={e.isHost} />)
+                default:
+                // return (<StreamMedia mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession}/>)
+            }
+        })
+    }
+
 
     displayStreams() {
         return this.state.incomingStreams.map((e, i) => {

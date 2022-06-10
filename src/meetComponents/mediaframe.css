@@ -5,6 +5,7 @@
 .media-items{
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 .media-items .avatars {
@@ -35,4 +36,14 @@
     bottom: 0;
     height: 20em;
 
+}
+
+.media-items .screen{
+    position: absolute !important;
+    z-index: -1;
+}
+
+.media-items .screen video{
+    width: 100vw;
+    height: 100vh;
 }

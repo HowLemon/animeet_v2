@@ -61,7 +61,7 @@ class FrameControl extends React.Component {
     //------------  react controls ---------------
 
     async componentDidMount() {
-        init();
+        await init();
 
         //live2D init();
         window.initFramework();
