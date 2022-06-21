@@ -4,8 +4,7 @@ import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import PeerCore from "../peerCore";
-import { GPU } from "gpu.js"
-import { createProgramInfo, createTexture, m4, primitives, setBuffersAndAttributes, setUniforms, createBufferInfoFromArrays } from "twgl.js";
+// import { createProgramInfo, createTexture, m4, primitives, setBuffersAndAttributes, setUniforms, createBufferInfoFromArrays } from "twgl.js";
 import { createProgram } from "twgl.js/dist/4.x/twgl";
 
 class MediaFrame extends React.Component {
