@@ -8485,7 +8485,7 @@ var Controller = (function () {
             else {
                 projection.scale(height / width, 1.0);
             }
-            projection.scaleRelative(1.7, 1.7);
+            projection.scaleRelative(window.cubismScale || 1.7, window.cubismScale || 1.7);
             projection.translateY(-1.3);
             this.dummyLoader.update();
             this.dummyLoader.draw(projection, [
@@ -9329,6 +9329,8 @@ var ModelLoader = (function (_super) {
         this._model.setParameterValueById(this.modelParameters.eyeBrowRX, this.brows.rx, 0.8);
         this._model.setParameterValueById(this.modelParameters.eyeBrowRY, this.brows.ry, 0.8);
         this._model.setParameterValueById(this.modelParameters.eyeBrowRA, this.brows.ra, 0.8);
+        this._model.setParameterValueById(this.modelParameters.bodyAngleX, this.headDirection.x * 0.1, 0.8);
+        this._model.setParameterValueById(this.modelParameters.bodyAngleZ, this.headDirection.z * 0.1, 0.8);
         if (Math.abs(headX - this.headDirection.x) > this.errorRange) {
             this._model.addParameterValueById(this.modelParameters.angleX, this.clamp((this.headDirection.x - headX) * this.smoothTime * (deltaTimeSeconds / (1 / 60)), -this.maxStride, this.maxStride));
         }

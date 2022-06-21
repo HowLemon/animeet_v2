@@ -4,6 +4,9 @@ import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import PeerCore from "../peerCore";
+import { GPU } from "gpu.js"
+import { createProgramInfo, createTexture, m4, primitives, setBuffersAndAttributes, setUniforms, createBufferInfoFromArrays } from "twgl.js";
+import { createProgram } from "twgl.js/dist/4.x/twgl";
 
 class MediaFrame extends React.Component {
     constructor(props) {
@@ -46,7 +49,7 @@ class MediaFrame extends React.Component {
         })
     }
 
-    displayScreenShares(){
+    displayScreenShares() {
         return this.props.localStreams.map((e, i) => {
             switch (e.type) {
                 case "avatar":
@@ -101,20 +104,20 @@ class StreamMedia extends React.Component {
 
     }
 
-    initStream(stream){
+    initStream(stream) {
         this.setState({ ready: true })
-            console.log(stream);
-            this.videoRef.current.srcObject = stream;
-            this.videoRef.current.onloadedmetadata = ((video) => {
-                return (e) => {
-                    video.play();
-                }
-            })(this.videoRef.current);
-            this.videoRef.current.oninactive = ((video) => {
-                return (e) => {
-                    alert("bye");
-                }
-            })(this.videoRef.current);
+        console.log(stream);
+        this.videoRef.current.srcObject = stream;
+        this.videoRef.current.onloadedmetadata = ((video) => {
+            return (e) => {
+                video.play();
+            }
+        })(this.videoRef.current);
+        this.videoRef.current.oninactive = ((video) => {
+            return (e) => {
+                alert("bye");
+            }
+        })(this.videoRef.current);
     }
 
     render() {
@@ -157,6 +160,7 @@ class AvatarMedia extends React.Component {
     }
 
     initStream = (stream) => {
+
         console.log("ON STREAM", stream);
         const tracks = stream.getTracks();
         const avatarStream = new MediaStream([tracks[0]]);
@@ -185,19 +189,19 @@ class AvatarMedia extends React.Component {
                 alert("bye");
             }
         })(this.alphaVideoRef.current);
-        let ctx = this.canvasRef.current.getContext('2d');
+
+
+        /** @type {WebGLRenderingContext} */
+        let ctx = this.canvasRef.current.getContext('webgl');
+        console.log(ctx);
+        const program = createProgram(ctx, [vs, fs]);
+        const srcTex = initTexture(ctx);
+        const alphaTex = initTexture(ctx);
         let step = () => {
-            ctx.drawImage(this.avatarVideoRef.current, 0, 0, 500, 500);
-            let frame1 = ctx.getImageData(0, 0, 500, 500);
-            let l = frame1.data.length / 4;
-            ctx.drawImage(this.alphaVideoRef.current, 0, 0, 500, 500);
-            let frame2 = ctx.getImageData(0, 0, 500, 500);
+            updateTexture(ctx,srcTex, this.avatarVideoRef.current);
+            updateTexture(ctx, alphaTex,this.alphaVideoRef.current);
+            render(ctx,program,[srcTex,alphaTex]);
 
-            for (let i = 0; i < l; i++) {
-                frame1.data[i * 4 + 3] = frame2.data[i * 4];
-            }
-
-            ctx.putImageData(frame1, 0, 0);
             requestAnimationFrame(step)
         }
         requestAnimationFrame(step);
@@ -220,6 +224,88 @@ class AvatarMedia extends React.Component {
 
 }
 
+function setRectangle(gl, x, y, width, height) {
+    var x1 = x;
+    var x2 = x + width;
+    var y1 = y;
+    var y2 = y + height;
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        x1, y1,
+        x2, y1,
+        x1, y2,
+        x1, y2,
+        x2, y1,
+        x2, y2,
+    ]), gl.STATIC_DRAW);
+}
+
+
+
+/**
+ * 
+ * @param {GPU} gpu 
+ */
+function createApplier(gpu) {
+    return gpu.createKernel(function (src, alpha) {
+        console.log(src)
+        const pixel = src[this.thread.y][this.thread.x];
+        const pixel_alpha = alpha[this.thread.y][this.thread.x];
+        this.color(pixel[0], pixel[1], pixel[2], pixel_alpha[0]);
+    }).setGraphical(true)
+        .setOutput([500, 500]);
+}
+
+
+/**
+ * 
+ * @param {WebGLRenderingContext} gl 
+ * @returns 
+ */
+function initTexture(gl) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Because video has to be download over the internet
+    // they might take a moment until it's ready so
+    // put a single pixel in the texture so we can
+    // use it immediately.
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+        width, height, border, srcFormat, srcType,
+        pixel);
+
+    // Turn off mips and set wrapping to clamp to edge so it
+    // will work regardless of the dimensions of the video.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+    return texture;
+}
+
+/**
+ * 
+ * @param {WebGLRenderingContext} gl 
+ * @param {WebGLTexture} texture 
+ * @param {*} video 
+ */
+function updateTexture(gl, texture, video) {
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+        srcFormat, srcType, video);
+}
+
 
 class RemoteAvatarMedia extends AvatarMedia {
     constructor(props) {
@@ -234,8 +320,147 @@ class RemoteAvatarMedia extends AvatarMedia {
 
 }
 
+const vs = `
+attribute vec2 a_position;
+attribute vec2 a_texCoord;
 
+uniform vec2 u_resolution;
 
+varying vec2 v_texCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = a_position / u_resolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+   // pass the texCoord to the fragment shader
+   // The GPU will interpolate this value between points.
+   v_texCoord = a_texCoord;
+}
+`;
+
+const fs = `
+precision mediump float;
+
+// our textures
+uniform sampler2D u_image0;
+uniform sampler2D u_image1;
+
+// the texCoords passed in from the vertex shader.
+varying vec2 v_texCoord;
+
+void main() {
+   vec4 color0 = texture2D(u_image0, v_texCoord);
+   vec4 color1 = texture2D(u_image1, v_texCoord);
+   gl_FragColor = vec4(color0[0],color0[1],color0[2],color1[0]);
+}
+`;
+
+function render(gl, program, textures) {
+    // Get A WebGL context
+  
+    // setup GLSL program
+    // var program = webglUtils.createProgramFromScripts(gl, ["vertex-shader-2d", "fragment-shader-2d"]);
+    gl.useProgram(program);
+  
+    // look up where the vertex data needs to go.
+    var positionLocation = gl.getAttribLocation(program, "a_position");
+    var texcoordLocation = gl.getAttribLocation(program, "a_texCoord");
+  
+    // Create a buffer to put three 2d clip space points in
+    var positionBuffer = gl.createBuffer();
+  
+    // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    // Set a rectangle the same size as the image.
+    setRectangle(gl, 0, 0, 500, 500);
+  
+    // provide texture coordinates for the rectangle.
+    var texcoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        0.0,  0.0,
+        1.0,  0.0,
+        0.0,  1.0,
+        0.0,  1.0,
+        1.0,  0.0,
+        1.0,  1.0,
+    ]), gl.STATIC_DRAW);
+  
+    // create 2 textures
+    
+  
+    // lookup uniforms
+    var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+  
+    // lookup the sampler locations.
+    var u_image0Location = gl.getUniformLocation(program, "u_image0");
+    var u_image1Location = gl.getUniformLocation(program, "u_image1");
+  
+    // webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+  
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  
+    // Clear the canvas
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  
+    // Tell it to use our program (pair of shaders)
+    gl.useProgram(program);
+  
+    // Turn on the position attribute
+    gl.enableVertexAttribArray(positionLocation);
+  
+    // Bind the position buffer.
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  
+    // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+    var size = 2;          // 2 components per iteration
+    var type = gl.FLOAT;   // the data is 32bit floats
+    var normalize = false; // don't normalize the data
+    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+    var offset = 0;        // start at the beginning of the buffer
+    gl.vertexAttribPointer(
+        positionLocation, size, type, normalize, stride, offset);
+  
+    // Turn on the texcoord attribute
+    gl.enableVertexAttribArray(texcoordLocation);
+  
+    // bind the texcoord buffer.
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+  
+    // Tell the texcoord attribute how to get data out of texcoordBuffer (ARRAY_BUFFER)
+    var size = 2;          // 2 components per iteration
+    var type = gl.FLOAT;   // the data is 32bit floats
+    var normalize = false; // don't normalize the data
+    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+    var offset = 0;        // start at the beginning of the buffer
+    gl.vertexAttribPointer(
+        texcoordLocation, size, type, normalize, stride, offset);
+  
+    // set the resolution
+    gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+  
+    // set which texture units to render with.
+    gl.uniform1i(u_image0Location, 0);  // texture unit 0
+    gl.uniform1i(u_image1Location, 1);  // texture unit 1
+  
+    // Set each texture unit to use a particular texture.
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+  
+    // Draw the rectangle.
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
 
 
 // class DummyMedia extends React.Component {

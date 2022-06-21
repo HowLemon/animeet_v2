@@ -4,6 +4,7 @@ import { faBars, faSignal } from "@fortawesome/free-solid-svg-icons";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './frameControl.css'
+import OneEuroFilter from "./filters";
 // import * as bootstrap from 'bootstrap';
 
 class FrameControl extends React.Component {
@@ -88,16 +89,37 @@ class FrameControl extends React.Component {
 
         this.avatarRef.current.appendChild(document.querySelector("canvas.live2D"))
         this.avatar = await window.loadModel("./cubismSDK/resource/hiyori/Hiyori.model3.json");
+        const filterX = new OneEuroFilter(30, 0.0094, 0.005, 1);
+        const filterY = new OneEuroFilter(30, 0.0094, 0.005, 1);
+        const filterZ = new OneEuroFilter(30, 0.0094, 0.005, 1);
+        const filterLB = new OneEuroFilter(30, 0.0094, 0.0005, 1);
+        const filterRB = new OneEuroFilter(30, 0.0094, 0.0005, 1);
+        const filterEyeX = new OneEuroFilter(30, 0.0015, 0.0000007, 0.5);
+        const filterEyeY = new OneEuroFilter(30, 0.0015, 0.0000007, 0.5);
         this.faceDetectinterval = setInterval(() => {
             if (!this.avatar) return;
             let x = ((window.faceXRotation - window.faceXOffset) * (180 / Math.PI)) || 0;
             let y = ((window.faceYRotation - window.faceYOffset) * (180 / Math.PI)) || 0;
             let z = ((window.faceZRotation - window.faceZOffset) * (180 / Math.PI)) || 0;
+            let m = window.mouthOpen || 0;
+            let ex = window.eyeX || 0;
+            let ey = window.eyeY || 0;
+            let lb = window.EyeOpenL || 1;
+            let rb = window.EyeOpenR || 1;
             if (y > 180) y -= 360;
             if (x > 180) x -= 360;
             if (z > 180) z -= 360;
-            this.avatar.character.setMotion(y, -x * 2, -z * 2, 1, 0);
-            this.avatar.character.setEyes(y * 0.1, -x * 0.1, 1, 1);
+            x = filterX.filter(x, Date.now());
+            y = filterY.filter(y, Date.now());
+            z = filterZ.filter(z, Date.now());
+            ex = filterEyeX.filter(ex, Date.now());
+            ey = filterEyeY.filter(ey, Date.now());
+            lb *= 5;
+            rb *= 5;
+            lb > 0.5? lb = 1 : lb = 0;
+            rb > 0.5? rb = 1 : rb = 0;
+            this.avatar.character.setMotion(y, -x * 2, -z * 2, 1, m);
+            this.avatar.character.setEyes(ex * -2, ey * 2, rb, lb);
             // this.faceDataRef.current.innerHTML = `${y},<br/> ${-x * 2},<br/> ${-z * 2}`
         }, 100)
 
@@ -260,7 +282,7 @@ class FrameControl extends React.Component {
         this.setState({ screenEnabled: e.target.checked });
         if (e.target.checked) {
             let capture = await this.startCapture();
-            this.setState({screenShareStream:capture})
+            this.setState({ screenShareStream: capture })
             this.props.registerStream(capture, "screen");
         } else {
             this.props.stopStream(this.state.screenShareStream);
@@ -268,125 +290,130 @@ class FrameControl extends React.Component {
     }
 
     async startCapture() {
-    let captureStream = null;
+        let captureStream = null;
 
-    try {
-        captureStream = await navigator.mediaDevices.getDisplayMedia();
-    } catch (err) {
-        console.error("Error: " + err);
+        try {
+            captureStream = await navigator.mediaDevices.getDisplayMedia();
+        } catch (err) {
+            console.error("Error: " + err);
+        }
+        return captureStream;
     }
-    return captureStream;
-}
 
 
 
 
-render() {
-    const mediaControlStyle = "border-top pt-2 mt-3"
-    return (
-        <div>
-            <div type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling" className="btn btn-light framecontrol position-absolute top-0 start-0 m-3 border rounded-3">
-                <FontAwesomeIcon icon={faBars} />
-            </div>
-            <div className="offcanvas offcanvas-start" data-bs-scroll="true" data-bs-backdrop="false" tabIndex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
-                <div className="offcanvas-header">
-                    <h5 className="offcanvas-title" id="offcanvasScrollingLabel">Settings</h5>
-                    <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    render() {
+        const mediaControlStyle = "border-top pt-2 mt-3"
+        return (
+            <div>
+                <div type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling" className="btn btn-light framecontrol position-absolute top-0 start-0 m-3 border rounded-3">
+                    <FontAwesomeIcon icon={faBars} />
                 </div>
-                <div className="offcanvas-body settings-body">
-                    {/* session infos */}
-                    <p id="name">Name: {this.props.account.name}</p>
-                    <p id="session">Current Session: {this.props.session}</p>
-                    <div id="connectors">Connected Users: ({this.props.friends.length + 1})
-                        <ul className="list-group list-group-flush mt-3 mb-3 ps-3 pe-3">
-                            {this.props.friends.map((x, index) => (
-                                <li key={index} className="list-group-item"><FontAwesomeIcon icon={faSignal} />  {x.name}{x.peer === this.props.session ? " (host)" : ""}</li>
-                            ))}
-                            <li className="list-group-item"><FontAwesomeIcon icon={faSignal} />  You</li>
-                        </ul>
+                <div className="offcanvas offcanvas-start" data-bs-scroll="true" data-bs-backdrop="false" tabIndex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
+                    <div className="offcanvas-header">
+                        <h5 className="offcanvas-title" id="offcanvasScrollingLabel">Settings</h5>
+                        <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                     </div>
-
-                    {/* mic controls */}
-                    <div className={mediaControlStyle}>
-                        <h4>Microphone:</h4>
-                        <div className="form-check form-switch">
-                            <input className="form-check-input" role="switch" id="enableMic" type="checkbox" checked={this.state.micEnabled} defaultChecked={this.state.micEnabled} onChange={e => { this.setState({ micEnabled: e.target.checked }) }} />
-                            <label className="form-check-label" for="enableMic">Enabled</label>
+                    <div className="offcanvas-body settings-body">
+                        {/* session infos */}
+                        <p id="name">Name: {this.props.account.name}</p>
+                        <p id="session">Current Session: {this.props.session}</p>
+                        <div id="connectors">Connected Users: ({this.props.friends.length + 1})
+                            <ul className="list-group list-group-flush mt-3 mb-3 ps-3 pe-3">
+                                {this.props.friends.map((x, index) => (
+                                    <li key={index} className="list-group-item"><FontAwesomeIcon icon={faSignal} />  {x.name}{x.peer === this.props.session ? " (host)" : ""}</li>
+                                ))}
+                                <li className="list-group-item"><FontAwesomeIcon icon={faSignal} />  You</li>
+                            </ul>
                         </div>
 
-                        <select onChange={this.updateAudioInput} ref={this.micRef} className="form-select" aria-label="Default select example">
-                            {
-                                this.state.devices.filter(device => device.kind === "audioinput").map((val, ind) =>
-                                    (<option key={ind} value={val.deviceId}>{val.label || "Mic " + ind}</option>)
-                                )
-                            }
-                        </select>
-                        <div ref={this.audioRef}>{this.displayVolume(Math.pow(Math.max(this.state.volume, 0), 2) * 0.01, 0, 200)}</div>
-                    </div>
+                        {/* mic controls */}
+                        <div className={mediaControlStyle}>
+                            <h4>Microphone:</h4>
+                            <div className="form-check form-switch">
+                                <input className="form-check-input" role="switch" id="enableMic" type="checkbox" checked={this.state.micEnabled} defaultChecked={this.state.micEnabled} onChange={e => { this.setState({ micEnabled: e.target.checked }) }} />
+                                <label className="form-check-label" for="enableMic">Enabled</label>
+                            </div>
 
-                    {/* camera controls */}
-                    <div className={mediaControlStyle}>
-                        <h4>Camera:</h4>
-                        <div className="form-check form-switch">
-                            <input className="form-check-input" role="switch" id="enableCam" type="checkbox" checked={this.state.cameraEnabled} defaultChecked={this.state.cameraEnabled} onChange={this.toggleVideo} />
-                            <label className="form-check-label" for="enableCam">{this.state.cameraEnabled ? "Enabled" : "Disabled"}</label>
+                            <select onChange={this.updateAudioInput} ref={this.micRef} className="form-select" aria-label="Default select example">
+                                {
+                                    this.state.devices.filter(device => device.kind === "audioinput").map((val, ind) =>
+                                        (<option key={ind} value={val.deviceId}>{val.label || "Mic " + ind}</option>)
+                                    )
+                                }
+                            </select>
+                            <div ref={this.audioRef}>{this.displayVolume(Math.pow(Math.max(this.state.volume, 0), 2) * 0.01, 0, 200)}</div>
                         </div>
 
-                        <select onChange={this.updateVideoInput} ref={this.camRef} className="form-select" aria-label="Default select example">
-                            {
-                                this.state.devices.filter(device => device.kind === "videoinput").map((val, ind) =>
-                                    (<option key={ind} value={val.deviceId}>{val.label || "Camera " + ind}</option>)
-                                )
-                            }
-                        </select>
-                        Preview:<br />
+                        {/* camera controls */}
+                        <div className={mediaControlStyle}>
+                            <h4>Camera:</h4>
+                            <div className="form-check form-switch">
+                                <input className="form-check-input" role="switch" id="enableCam" type="checkbox" checked={this.state.cameraEnabled} defaultChecked={this.state.cameraEnabled} onChange={this.toggleVideo} />
+                                <label className="form-check-label" for="enableCam">{this.state.cameraEnabled ? "Enabled" : "Disabled"}</label>
+                            </div>
 
-                        <video id="video-player" ref={this.previewRef} className="border col-12" src=""></video>
+                            <select onChange={this.updateVideoInput} ref={this.camRef} className="form-select" aria-label="Default select example">
+                                {
+                                    this.state.devices.filter(device => device.kind === "videoinput").map((val, ind) =>
+                                        (<option key={ind} value={val.deviceId}>{val.label || "Camera " + ind}</option>)
+                                    )
+                                }
+                            </select>
+                            Preview:<br />
+
+                            <video id="video-player" ref={this.previewRef} className="border col-12" src=""></video>
 
 
-                    </div>
-
-                    {/* avatar controls */}
-                    <div className={mediaControlStyle}>
-                        <h4>Avatar:</h4>
-                        <div className="form-check form-switch">
-                            <input className="form-check-input" role="switch" id="enableAvatar" type="checkbox" checked={this.state.avatarEnabled} defaultChecked={this.state.avatarEnabled} onChange={this.toggleAvatar} />
-                            <label className="form-check-label" for="enableAvatar">Enabled</label>
                         </div>
 
-                        <select onChange={this.updateAvatar} className="form-select" aria-label="Default select example">
-                            <option value="cubismSDK/resource/hiyori/Hiyori.model3.json">Hiyori</option>
-                            <option value="cubismSDK/resource/Haru/Haru.model3.json">Haru</option>
-                            <option value="cubismSDK/resource/Natori/Natori.model3.json">Natori</option>
-                            <option value="cubismSDK/resource/miku/miku_sample_t04.model3.json">Miku</option>
-                        </select>
-                        <button onClick={() => {
-                            window.faceXOffset = window.faceXRotation;
-                            window.faceYOffset = window.faceYRotation;
-                            window.faceZOffset = window.faceZRotation;
-                        }} className="btn btn-primary mt-3 mb-1">Calibrate</button>
-                        <p ref={this.faceDataRef} ></p>
-                        <div id="avatar-container" ref={this.avatarRef}>
-                            <div className="canvas-container border" width="500px" height="500px">
+                        {/* avatar controls */}
+                        <div className={mediaControlStyle}>
+                            <h4>Avatar:</h4>
+                            <div className="form-check form-switch">
+                                <input className="form-check-input" role="switch" id="enableAvatar" type="checkbox" checked={this.state.avatarEnabled} defaultChecked={this.state.avatarEnabled} onChange={this.toggleAvatar} />
+                                <label className="form-check-label" for="enableAvatar">Enabled</label>
+                            </div>
 
+                            <div>
+                            <label htmlFor="cubismScale" class="form-label">Scale</label>
+                            <input type="range" className="form-range" id="Scale" defaultValue={17} min={1} max={50} onChange={(e)=>{window.cubismScale = e.target.value / 10}}></input>
+                            </div>
+
+                            <select onChange={this.updateAvatar} className="form-select" aria-label="Default select example">
+                                <option value="cubismSDK/resource/hiyori/Hiyori.model3.json">Hiyori</option>
+                                <option value="cubismSDK/resource/Haru/Haru.model3.json">Haru</option>
+                                <option value="cubismSDK/resource/Natori/Natori.model3.json">Natori</option>
+                                <option value="cubismSDK/resource/miku/miku_sample_t04.model3.json">Miku</option>
+                            </select>
+                            <button onClick={() => {
+                                window.faceXOffset = window.faceXRotation;
+                                window.faceYOffset = window.faceYRotation;
+                                window.faceZOffset = window.faceZRotation;
+                            }} className="btn btn-primary mt-3 mb-1">Calibrate</button>
+                            <p ref={this.faceDataRef} ></p>
+                            <div id="avatar-container" ref={this.avatarRef}>
+                                <div className="canvas-container border" width="500px" height="500px">
+
+                                </div>
+                            </div>
+                            <canvas ref={this.alphaCanvasRef} width="500" height="500" className="live2Dalpha d-none"></canvas>
+                        </div>
+                        {/* screenshare controls */}
+
+                        <div className={this.props.isHost ? mediaControlStyle : "d-none"}>
+                            <h4>Screen Share</h4>
+                            <div className="form-check form-switch">
+                                <input className="form-check-input" role="switch" id="enableAvatar" type="checkbox" checked={this.state.screenEnabled} defaultChecked={this.state.screenEnabled} onChange={this.toggleScreen} />
+                                <label className="form-check-label" for="enableAvatar">Enabled</label>
                             </div>
                         </div>
-                        <canvas ref={this.alphaCanvasRef} width="500" height="500" className="live2Dalpha d-none"></canvas>
-                    </div>
-                    {/* screenshare controls */}
-
-                    <div className={this.props.isHost ? mediaControlStyle : "d-none"}>
-                        <h4>Screen Share</h4>
-                        <div className="form-check form-switch">
-                            <input className="form-check-input" role="switch" id="enableAvatar" type="checkbox" checked={this.state.screenEnabled} defaultChecked={this.state.screenEnabled} onChange={this.toggleScreen} />
-                            <label className="form-check-label" for="enableAvatar">Enabled</label>
-                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    )
-}
+        )
+    }
 }
 
 /**
@@ -416,7 +443,7 @@ async function init() {
 
     async function sendVideoElement(stream) {
         try {
-            if(ready) {
+            if (ready) {
                 ready = false;
                 await faceMesh.send({ image: videoElement });
                 ready = true;
@@ -427,8 +454,20 @@ async function init() {
         let callback = () => {
             sendVideoElement(stream);
         }
-        if (stream.active) requestAnimationFrame(callback);
+        if (stream.active) delayedAnimation(callback);
     }
+
+    let fps = 30;
+
+
+
+    function delayedAnimation(f) {
+        setTimeout(() => {
+            f();
+        }, 1000 / fps);
+    }
+
+
     // sendVideoElement();
     videoElement.onloadeddata = () => {
         let stream = videoElement.captureStream();
@@ -456,7 +495,12 @@ let lastTime = 0;
 let fpsCounter = document.getElementById("fps");
 let smoother = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 let detectedFaceListener = [];
-
+const filterX = new OneEuroFilter(30, 0.0094, 0.005, 1);
+const filterY = new OneEuroFilter(30, 0.0094, 0.005, 1);
+const filterZ = new OneEuroFilter(30, 0.0094, 0.005, 1);
+const filterLB = new OneEuroFilter(30, 0.0094, 0.0005, 1);
+const filterRB = new OneEuroFilter(30, 0.0094, 0.0005, 1);
+const filterLEye = new OneEuroFilter(30, 0.0015, 0.0000007, 0.5);
 function notifyDetectedFace() {
     let diff = (Date.now() - lastTime);
     smoother.unshift(diff);
@@ -481,33 +525,42 @@ const faceZArray = Array(filterLength).fill(0);
 function calculateFaceData(face) {
     let normal = calculateNormal(face[8], face[36], face[266]);
 
-    faceXArray.shift()
-    faceYArray.shift()
-    faceZArray.shift()
-
-    faceXArray.push(calculateAngle(normal.y, normal.z));
-    faceYArray.push(calculateAngle(normal.x, normal.z));
-    faceZArray.push(calculateAngle(face[266].y, face[36].y) * 4);
-    if (window.filter) {
-        // console.log(faceXArray, faceYArray, faceZArray)
-        let faceXArraySnapshot = faceXArray.slice();
-        let faceYArraySnapshot = faceYArray.slice();
-        let faceZArraySnapshot = faceZArray.slice();
-
-        // lowPassFilter.lowPassFilter(faceXArraySnapshot, window.cutoff, window.sampleRate, 1);
-        // lowPassFilter.lowPassFilter(faceYArraySnapshot, window.cutoff, window.sampleRate, 1);
-        // lowPassFilter.lowPassFilter(faceZArraySnapshot, window.cutoff, window.sampleRate, 1);
-        console.log(faceXArraySnapshot);
-
-        window.faceXRotation = faceXArraySnapshot[5];
-        window.faceYRotation = faceYArraySnapshot[5];
-        window.faceZRotation = faceZArraySnapshot[5];
-    } else {
-        window.faceXRotation = faceXArray.at(-1)
-        window.faceYRotation = faceYArray.at(-1)
-        window.faceZRotation = faceZArray.at(-1)
+    let scale = distanceVector(face[36], face[266]);
+    let mouthOpen = distanceVector(face[13], face[14]) / scale;
+    let leyeOpen = distanceVector(face[159], face[145]) / scale;
+    let reyeOpen = distanceVector(face[386], face[374]) / scale;
+    let toLeft = 0, toRight = 0, toTop = 0, toBottom = 0;
+    if (reyeOpen != 0) {
+        toLeft += distanceVector(face[362], face[473])
+        toRight += distanceVector(face[263], face[473])
+        toTop += distanceVector(face[386], face[473])
+        toBottom += distanceVector(face[374], face[473])
     }
+    if (leyeOpen != 0) {
+        toLeft += distanceVector(face[33], face[468])
+        toRight += distanceVector(face[133], face[468])
+        toTop += distanceVector(face[159], face[468])
+        toBottom += distanceVector(face[145], face[468])
+    }
+    let eyeX = ((toLeft / (toLeft + toRight)) - 0.5) * 6.25 || 0;
+    let eyeY = ((toBottom / (toBottom + toTop)) - 0.55) * 5 || 0;
 
+    window.faceXRotation = calculateAngle(normal.y, normal.z);
+    window.faceYRotation = calculateAngle(normal.x, normal.z);
+    window.faceZRotation = calculateAngle(face[266].y, face[36].y) * 4;
+    window.mouthOpen = mouthOpen;
+    window.EyeOpenL = leyeOpen;
+    window.EyeOpenR = reyeOpen;
+    window.eyeX = eyeX;
+    window.eyeY = eyeY;
+}
+
+function distanceVector(v1, v2) {
+    var dx = v1.x - v2.x;
+    var dy = v1.y - v2.y;
+    var dz = v1.z - v2.z;
+
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 function calculateNormal(a, b, c) {
