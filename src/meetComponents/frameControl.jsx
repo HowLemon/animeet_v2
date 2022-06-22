@@ -82,6 +82,7 @@ class FrameControl extends React.Component {
         //move live2D canvas from root to here
         //setting up canvas stream
         let live2dCanvas = document.querySelector("canvas.live2D");
+        
         let avatarStream = live2dCanvas.captureStream(60);
 
         console.log("CONTEXT: ", live2dCanvas.getContext('2d'), live2dCanvas.toDataURL("image/png"));
@@ -249,6 +250,11 @@ class FrameControl extends React.Component {
 
     toggleAudio(e) {
         this.setState({ micEnabled: e.target.value });
+        if (e.target.checked) {
+            this.props.registerStream(this.state.audioStream, "audio");
+        } else {
+            this.props.stopStream(this.state.audioStream);
+        }
     }
 
     displayVolume(val, min, max) {

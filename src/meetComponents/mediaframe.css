@@ -15,27 +15,27 @@
 }
 .media-items  .avatar{
     vertical-align: bottom;
+    max-height: 50vh;
 }
 
 
 
 .media-items  .avatar.host{
     order: -1;
-    width: 30em;
-    height: 40em;
+    height: 30em;
 }
 .media-items  .avatar{
-    width: 15em;
-    height: 20em;
+    width: 20em;
+    height: 30em;
 }
 .media-items  .avatar.host canvas{
-    height: 40em;
+    height: 30em;
 }
 
 .media-items  .avatar canvas{
     bottom: 0;
-    height: 20em;
-
+    height: 30em;
+    max-height: 50vh;
 }
 
 .media-items .screen{
@@ -46,4 +46,22 @@
 .media-items .screen video{
     width: 100vw;
     height: 100vh;
+}
+
+.media-items * > span{
+    top: -1.5em;
+    transform: translateX(-50%);
+}
+
+.media-items .webcam .video-limitor{
+    width: 15em;
+    height: 15em;
+    overflow: hidden;
+}
+
+.media-items .webcam video{
+    position: relative;
+    left: -25%;
+    min-width: 100%;
+    min-height: 100%;
 }

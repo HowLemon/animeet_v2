@@ -39,9 +39,11 @@ class MediaFrame extends React.Component {
         return this.props.localStreams.map((e, i) => {
             switch (e.type) {
                 case "avatar":
-                    return (<AvatarMedia localStream={e.stream} stream-type={"avatar"} key={e.stream.id} isHost={e.isHost} />)
+                    return (<AvatarMedia peerId={this.peer.id} localStream={e.stream} stream-type={"avatar"} key={e.stream.id} isHost={e.isHost} />)
                 case "screen":
-                    return (<StreamMedia localStream={e.stream} stream-type={"screen"} key={e.stream.id} isHost={e.isHost} />)
+                    return (<StreamMedia peerId={this.peer.id} localStream={e.stream} stream-type={"screen"} key={e.stream.id} isHost={e.isHost} />)
+                case "webcam":
+                    return (<StreamMedia peerId={this.peer.id} localStream={e.stream} stream-type={"webcam"} key={e.stream.id} isHost={e.isHost} />)
                 default:
                 // return (<StreamMedia mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession}/>)
             }
@@ -52,9 +54,9 @@ class MediaFrame extends React.Component {
         return this.props.localStreams.map((e, i) => {
             switch (e.type) {
                 case "avatar":
-                    return (<AvatarMedia localStream={e.stream} stream-type={"avatar"} key={e.stream.id} isHost={e.isHost} />)
+                    return (<AvatarMedia peerId={e.peer} localStream={e.stream} stream-type={"avatar"} key={e.stream.id} isHost={e.isHost} />)
                 case "screen":
-                    return (<StreamMedia localStream={e.stream} stream-type={"screen"} key={e.stream.id} isHost={e.isHost} />)
+                    return (<StreamMedia peerId={e.peer} localStream={e.stream} stream-type={"screen"} key={e.stream.id} isHost={e.isHost} />)
                 default:
                 // return (<StreamMedia mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession}/>)
             }
@@ -66,9 +68,9 @@ class MediaFrame extends React.Component {
         return this.state.incomingStreams.map((e, i) => {
             switch (e.metadata.info) {
                 case "avatar":
-                    return (<RemoteAvatarMedia mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession} />)
+                    return (<RemoteAvatarMedia peerId={e.peer} mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession} />)
                 default:
-                    return (<RemoteStreamMedia mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession} />)
+                    return (<RemoteStreamMedia peerId={e.peer} mediaConnection={e} stream-type={e.metadata.info} key={e.connectionId} isHost={e.peer === this.peer.currentSession} />)
             }
         })
     }
@@ -92,15 +94,43 @@ class StreamMedia extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            ready: false
+            ready: false,
+            offset: null
         }
         this.initStream = this.initStream.bind(this);
+        this.followOffset = this.followOffset.bind(this);
         this.videoRef = React.createRef();
+        this.title = "Your Camera";
+        this.interval = null;
+        // this.followTarget = null;
     }
 
     componentDidMount() {
         this.initStream(this.props.localStream);
+        this.interval = setInterval(() => {
+            this.setState({
+                offset: this.followOffset()
+            });
+        }, 1000 / 20);
+    }
 
+    componentWillUnmount(){
+        clearInterval(this.interval);
+    }
+
+    //stupid followng function lol
+    followOffset(){
+        // return;
+        if(this.props['stream-type'] !== "webcam") return;
+        let followTarget = document.querySelector(`.media-items .avatar[data-peer='${this.props.peerId}']`);
+        if(!followTarget) return ;
+        let bound = followTarget.getBoundingClientRect();
+        let styletext = {
+            bottom: bound.height * 0.7,
+            left: bound.width * 0.7 + bound.x,
+            transform: "scale(0.5)"
+        }
+        return styletext;
     }
 
     initStream(stream) {
@@ -120,9 +150,18 @@ class StreamMedia extends React.Component {
     }
 
     render() {
-        const css = `${this.state.ready ? "d-inline-block" : "d-none"} border border-primary position-relative ${this.props['stream-type']}`
+        const offset = this.state.offset;
+        const css = `${this.state.ready ? "d-inline-block" : "d-none"} border border-primary ${offset?"position-absolute":"position-relative"} ${this.props['stream-type']}`
         return (
-            <div className={css}><video className="d-block" ref={this.videoRef} /></div>
+
+            <div style={offset} className={css} data-peer={this.props.peerId}>
+                <span className="position-absolute">
+                    {this.title}
+                </span>
+                <div className="video-limitor">
+                <video className="d-block" ref={this.videoRef} />
+                </div>
+            </div>
         )
     }
 }
@@ -133,11 +172,17 @@ class RemoteStreamMedia extends StreamMedia {
         this.state = {
             ready: false
         }
+        this.title = `${this.props.mediaConnection.metadata.owner}'s Camera`;
         this.videoRef = React.createRef();
     }
 
     componentDidMount() {
-        this.props.mediaConnection.on("stream", this.initStream)
+        this.props.mediaConnection.on("stream", this.initStream);
+        this.interval = setInterval(() => {
+            this.setState({
+                offset: this.followOffset()
+            });
+        }, 1000 / 20);
     }
 }
 
@@ -197,9 +242,9 @@ class AvatarMedia extends React.Component {
         const srcTex = initTexture(ctx);
         const alphaTex = initTexture(ctx);
         let step = () => {
-            updateTexture(ctx,srcTex, this.avatarVideoRef.current);
-            updateTexture(ctx, alphaTex,this.alphaVideoRef.current);
-            render(ctx,program,[srcTex,alphaTex]);
+            updateTexture(ctx, srcTex, this.avatarVideoRef.current);
+            updateTexture(ctx, alphaTex, this.alphaVideoRef.current);
+            render(ctx, program, [srcTex, alphaTex]);
 
             requestAnimationFrame(step)
         }
@@ -209,7 +254,7 @@ class AvatarMedia extends React.Component {
     render() {
         const css = `${this.state.ready ? "" : "d-none"} position-relative avatar ${this.props.isHost ? "host" : ""}`
         return (
-            <div className={css}>
+            <div className={css} data-peer={this.props.peerId}>
                 <span className="position-absolute">
                     {this.title}
                 </span>
@@ -222,6 +267,26 @@ class AvatarMedia extends React.Component {
     }
 
 }
+
+
+
+
+class RemoteAvatarMedia extends AvatarMedia {
+    constructor(props) {
+        super(props);
+        this.title = `${this.props.mediaConnection.metadata.owner}'s avatar`;
+    }
+
+    componentDidMount() {
+        this.props.mediaConnection.on("stream", this.initStream)
+    }
+
+
+}
+
+
+
+//------------------------------- WEBGL Processings----------------------------
 
 function setRectangle(gl, x, y, width, height) {
     var x1 = x;
@@ -237,8 +302,6 @@ function setRectangle(gl, x, y, width, height) {
         x2, y2,
     ]), gl.STATIC_DRAW);
 }
-
-
 
 /**
  * 
@@ -305,20 +368,6 @@ function updateTexture(gl, texture, video) {
         srcFormat, srcType, video);
 }
 
-
-class RemoteAvatarMedia extends AvatarMedia {
-    constructor(props) {
-        super(props);
-        this.title = `${this.props.mediaConnection.metadata.owner}'s avatar`;
-    }
-
-    componentDidMount() {
-        this.props.mediaConnection.on("stream", this.initStream)
-    }
-
-
-}
-
 const vs = `
 attribute vec2 a_position;
 attribute vec2 a_texCoord;
@@ -364,62 +413,62 @@ void main() {
 
 function render(gl, program, textures) {
     // Get A WebGL context
-  
+
     // setup GLSL program
     // var program = webglUtils.createProgramFromScripts(gl, ["vertex-shader-2d", "fragment-shader-2d"]);
     gl.useProgram(program);
-  
+
     // look up where the vertex data needs to go.
     var positionLocation = gl.getAttribLocation(program, "a_position");
     var texcoordLocation = gl.getAttribLocation(program, "a_texCoord");
-  
+
     // Create a buffer to put three 2d clip space points in
     var positionBuffer = gl.createBuffer();
-  
+
     // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     // Set a rectangle the same size as the image.
     setRectangle(gl, 0, 0, 500, 500);
-  
+
     // provide texture coordinates for the rectangle.
     var texcoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        0.0,  0.0,
-        1.0,  0.0,
-        0.0,  1.0,
-        0.0,  1.0,
-        1.0,  0.0,
-        1.0,  1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.0, 1.0,
+        0.0, 1.0,
+        1.0, 0.0,
+        1.0, 1.0,
     ]), gl.STATIC_DRAW);
-  
+
     // create 2 textures
-    
-  
+
+
     // lookup uniforms
     var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
-  
+
     // lookup the sampler locations.
     var u_image0Location = gl.getUniformLocation(program, "u_image0");
     var u_image1Location = gl.getUniformLocation(program, "u_image1");
-  
+
     // webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-  
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  
+
     // Clear the canvas
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-  
+
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
-  
+
     // Turn on the position attribute
     gl.enableVertexAttribArray(positionLocation);
-  
+
     // Bind the position buffer.
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  
+
     // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
     var size = 2;          // 2 components per iteration
     var type = gl.FLOAT;   // the data is 32bit floats
@@ -428,13 +477,13 @@ function render(gl, program, textures) {
     var offset = 0;        // start at the beginning of the buffer
     gl.vertexAttribPointer(
         positionLocation, size, type, normalize, stride, offset);
-  
+
     // Turn on the texcoord attribute
     gl.enableVertexAttribArray(texcoordLocation);
-  
+
     // bind the texcoord buffer.
     gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-  
+
     // Tell the texcoord attribute how to get data out of texcoordBuffer (ARRAY_BUFFER)
     var size = 2;          // 2 components per iteration
     var type = gl.FLOAT;   // the data is 32bit floats
@@ -443,23 +492,23 @@ function render(gl, program, textures) {
     var offset = 0;        // start at the beginning of the buffer
     gl.vertexAttribPointer(
         texcoordLocation, size, type, normalize, stride, offset);
-  
+
     // set the resolution
     gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-  
+
     // set which texture units to render with.
     gl.uniform1i(u_image0Location, 0);  // texture unit 0
     gl.uniform1i(u_image1Location, 1);  // texture unit 1
-  
+
     // Set each texture unit to use a particular texture.
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textures[0]);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, textures[1]);
-  
+
     // Draw the rectangle.
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-  }
+}
 
 
 // class DummyMedia extends React.Component {
