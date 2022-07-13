@@ -8486,7 +8486,7 @@ var Controller = (function () {
                 projection.scale(height / width, 1.0);
             }
             projection.scaleRelative(window.cubismScale || 1.7, window.cubismScale || 1.7);
-            projection.translateY(-1.3);
+            projection.translateY(window.cubismOffset || -1.3);
             this.dummyLoader.update();
             this.dummyLoader.draw(projection, [
                 0,

@@ -387,6 +387,11 @@ class FrameControl extends React.Component {
                             <input type="range" className="form-range" id="Scale" defaultValue={17} min={1} max={50} onChange={(e)=>{window.cubismScale = e.target.value / 10}}></input>
                             </div>
 
+                            <div>
+                            <label htmlFor="cubismOffset" class="form-label">Offset</label>
+                            <input type="range" className="form-range" id="Offset" defaultValue={25} min={1} max={50} onChange={(e)=>{window.cubismOffset = (e.target.value - 38)/ 10}}></input>
+                            </div>
+
                             <select onChange={this.updateAvatar} className="form-select" aria-label="Default select example">
                                 <option value="cubismSDK/resource/hiyori/Hiyori.model3.json">Hiyori</option>
                                 <option value="cubismSDK/resource/Haru/Haru.model3.json">Haru</option>
