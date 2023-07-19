@@ -86,46 +86,48 @@ class PeerCore {
     init() {
 
         // TODO setup a proper TURN server of my own
-        this.peer = new Peer({
-            secure: true,
-            host: "howlemon-peerjs.herokuapp.com",
-            port: 443,
-            config: {
-                'iceServers': [
-                    { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' },
-                    { url: 'stun:stun2.l.google.com:19302' },
-                    { url: 'stun:stun3.l.google.com:19302' },
-                    { url: 'stun:stun4.l.google.com:19302' },
-                    {
-                        url: 'turn:numb.viagenie.ca',
-                        credential: 'muazkh',
-                        username: 'webrtc@live.com'
-                    },
-                    {
-                        url: 'turn:192.158.29.39:3478?transport=udp',
-                        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                        username: '28224511:1379330808'
-                    },
-                    {
-                        url: 'turn:192.158.29.39:3478?transport=tcp',
-                        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                        username: '28224511:1379330808'
-                    },
-                    {
-                        url: 'turn:turn.bistri.com:80',
-                        credential: 'homeo',
-                        username: 'homeo'
-                    },
-                    {
-                        url: 'turn:turn.anyfirewall.com:443?transport=tcp',
-                        credential: 'webrtc',
-                        username: 'webrtc'
-                    }
+        // this.peer = new Peer({
+        //     secure: true,
+        //     host: "https://9000-peers-peerjsserver-m2nj3w17r3z.ws-us101.gitpod.io",
+        //     port: 9000,
+        //     path: "/myapp",
+        //     config: {
+        //         'iceServers': [
+        //             { url: 'stun:stun.l.google.com:19302' },
+        //             { url: 'stun:stun1.l.google.com:19302' },
+        //             { url: 'stun:stun2.l.google.com:19302' },
+        //             { url: 'stun:stun3.l.google.com:19302' },
+        //             { url: 'stun:stun4.l.google.com:19302' },
+        //             {
+        //                 url: 'turn:numb.viagenie.ca',
+        //                 credential: 'muazkh',
+        //                 username: 'webrtc@live.com'
+        //             },
+        //             {
+        //                 url: 'turn:192.158.29.39:3478?transport=udp',
+        //                 credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+        //                 username: '28224511:1379330808'
+        //             },
+        //             {
+        //                 url: 'turn:192.158.29.39:3478?transport=tcp',
+        //                 credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+        //                 username: '28224511:1379330808'
+        //             },
+        //             {
+        //                 url: 'turn:turn.bistri.com:80',
+        //                 credential: 'homeo',
+        //                 username: 'homeo'
+        //             },
+        //             {
+        //                 url: 'turn:turn.anyfirewall.com:443?transport=tcp',
+        //                 credential: 'webrtc',
+        //                 username: 'webrtc'
+        //             }
 
-                ]
-            }
-        });
+        //         ]
+        //     }
+        // });
+        this.peer = new Peer();
 
         // peer built-in events
 
